@@ -13,6 +13,8 @@ const Chat = ({location}) => {
   //Here: name is the state name, setName is the state changing function, useState() is the initial value setter function
   const [name, setName] = useState('');
   const [room, setRoom] = useState('');
+  const [message, setMessage] = useState('');
+  const [messages, setMessages] = useState([]);
 
   // The point where websocket will connect
   const ENDPOINT = 'http://localhost:5000';
@@ -31,8 +33,8 @@ const Chat = ({location}) => {
     setRoom(room);
 
     // Triggering / Emitting 'Join'
-    socket.emit('join', {name,room}, ({error})=>{
-      alert(error)
+    socket.emit('join', {name,room}, (data)=>{
+      console.log(data)
     });
 
     // Test Purpose
@@ -49,8 +51,33 @@ const Chat = ({location}) => {
     // This useEffect will trigger only when the endpoint or location.search value will change
   },[ENDPOINT, location.search]);
 
+
+  useEffect(()=>{
+    socket.on('message', (message)=>{
+      setMessages([...messages, message]);
+    });
+
+  },[messages]);
+
+  // SendMessage
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if(message){
+      socket.emit('sendMessage',message, ()=>{
+        setMessage('');
+      })
+    }
+  }
+
   // Return from chat component
-  return (<h1></h1>)
+  return (
+  <div className="outerContainer">
+    <div className="container">
+      <input type="text" value={message} onChange={(e)=>{setMessage(e.target.value)}} onKeyUp={(e)=> e.key === 'Enter'? sendMessage(e):null}/>
+    </div>
+  </div>
+  )
   
 }
 
