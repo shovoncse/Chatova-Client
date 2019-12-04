@@ -1,7 +1,18 @@
 import React , { useState, useEffect } from 'react'; // React component
-import { Link } from 'react-router-dom'; // For Routing
 import queryString from 'query-string'; //Retriving data from url
 import io from 'socket.io-client'; // Socket io for client side
+
+import './Chat.css'
+
+// infobar
+import InfoBar from '../InfoBar/InfoBar'
+// Messages
+import Messages from '../Messages/Messages'
+// input bar
+import Input from '../input/Input'
+// TextContainer
+import TextContainer from '../TextContainer/TextContainer'
+
 
 // initial declearation
 let socket;
@@ -15,6 +26,7 @@ const Chat = ({location}) => {
   const [room, setRoom] = useState('');
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState([]);
+  const [usersInRoom, setUsers] = useState([]);
 
   // The point where websocket will connect
   const ENDPOINT = 'http://localhost:5000';
@@ -57,10 +69,19 @@ const Chat = ({location}) => {
       setMessages([...messages, message]);
     });
 
+    socket.on('roomData', ({ users }) => {
+      setUsers(users);
+    })
+
+    return () => {
+      socket.emit('disconnect');
+
+      socket.off();
+    }
+
   },[messages]);
 
-  // SendMessage
-
+  // SendMessage 
   const sendMessage = (e) => {
     e.preventDefault();
     if(message){
@@ -74,8 +95,11 @@ const Chat = ({location}) => {
   return (
   <div className="outerContainer">
     <div className="container">
-      <input type="text" value={message} onChange={(e)=>{setMessage(e.target.value)}} onKeyUp={(e)=> e.key === 'Enter'? sendMessage(e):null}/>
+      <InfoBar room = { room }/>
+      <Messages messages={messages} name={name} />
+      <Input message={message} setMessage={setMessage} sendMessage={sendMessage} />
     </div>
+    <TextContainer usersInRoom={usersInRoom}/>
   </div>
   )
   
